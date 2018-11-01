@@ -1,4 +1,4 @@
- [Command("Pve")]
+        [Command("Pve")]
         public async Task Pve([Remainder] string username = " ")
         {
             string displayName = " ";
@@ -33,38 +33,7 @@
             string search = "-1";
             if (match.Success)
             {
-                //search username on the bungie Api
-                using (var client = new HttpClient())
-                {
-                    client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
-                    string link = apiSite + $"/Destiny2/SearchDestinyPlayer/{search}/{username}/";
-                    var response = await client.GetAsync(link);
-                    var content = await response.Content.ReadAsStringAsync();
-                    dynamic item = Newtonsoft.Json.JsonConvert.DeserializeObject(content);
-                    displayName = item.Response[0].displayName;
-                    destinyMembershipId = item.Response[0].membershipId;
-                    destinyMembershipType = item.Response[0].membershipType;
-                    
-                }
-                using (var client = new HttpClient())
-                {
-                    client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
-                    string link = apiSite + $"/Destiny2/{destinyMembershipType}/Profile/{destinyMembershipId}/?components=100";
-                    var response = await client.GetAsync(link);
-                    var content = await response.Content.ReadAsStringAsync();
-                    dynamic item = Newtonsoft.Json.JsonConvert.DeserializeObject(content);
-                    var characterIds = item.Response.profile.data.characterIds;
-                    foreach (var characterIdx in characterIds)
-                    {
-                        characterIds.Add(characterIdx);
-                    }
 
-                    await Context.Channel.SendMessageAsync(displayName);
-                    await Context.Channel.SendMessageAsync(destinyMembershipId);
-                }
-            }
-            else
-            {
                 SocketUser target = null;
                 var mentionedUser = Context.Message.MentionedUsers.FirstOrDefault();
                 target = mentionedUser ?? Context.User;
@@ -83,5 +52,39 @@
 
                 await Context.Channel.SendMessageAsync(displayName);
                 await Context.Channel.SendMessageAsync(destinyMembershipId);
+
+                
             }
-           }
+            else
+            {
+                //search username on the bungie Api
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+                    string link = apiSite + $"/Destiny2/SearchDestinyPlayer/{search}/{username}/";
+                    var response = await client.GetAsync(link);
+                    var content = await response.Content.ReadAsStringAsync();
+                    dynamic item = Newtonsoft.Json.JsonConvert.DeserializeObject(content);
+                    displayName = item.Response[0].displayName;
+                    destinyMembershipId = item.Response[0].membershipId;
+                    destinyMembershipType = item.Response[0].membershipType;
+
+                }
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+                    string link = apiSite + $"/Destiny2/{destinyMembershipType}/Profile/{destinyMembershipId}/?components=100";
+                    var response = await client.GetAsync(link);
+                    var content = await response.Content.ReadAsStringAsync();
+                    dynamic item = Newtonsoft.Json.JsonConvert.DeserializeObject(content);
+                    var characterIds = item.Response.profile.data.characterIds;
+                    foreach (var characterIdx in characterIds)
+                    {
+                        characterIds.Add(characterIdx);
+                    }
+
+                    await Context.Channel.SendMessageAsync(displayName);
+                    await Context.Channel.SendMessageAsync(destinyMembershipId);
+                }
+            }
+        }

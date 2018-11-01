@@ -1,0 +1,87 @@
+ [Command("Pve")]
+        public async Task Pve([Remainder] string username = " ")
+        {
+            string displayName = " ";
+            string destinyMembershipId = " ";
+            string destinyMembershipType = " ";
+            List<string> characters = new List<string>();
+            if (string.IsNullOrWhiteSpace(username))
+            { 
+                SocketUser target = null;
+                var mentionedUser = Context.Message.MentionedUsers.FirstOrDefault();
+                target = mentionedUser ?? Context.User;
+                var account = UserAccounts.GetAccount(target);
+
+                if (account.displayName == null || account.destinyMembershipId == " " || account.destinyMembershipType == " " || account.bungieMembershipId == " ")
+                {
+                    await Unregistered();
+                    return;
+                }
+
+                displayName = account.displayName;
+                destinyMembershipId = account.destinyMembershipId;
+                destinyMembershipType = account.destinyMembershipType;
+                characters.Add(account.character1);
+                characters.Add(account.character2);
+                characters.Add(account.character3);
+                await Context.Channel.SendMessageAsync(displayName);
+                await Context.Channel.SendMessageAsync(destinyMembershipId);
+            }
+            string RGX = "\b<@[0-9]+>\b";
+            Match match = new Regex(RGX).Match(username);
+
+            string search = "-1";
+            if (match.Success)
+            {
+                //search username on the bungie Api
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+                    string link = apiSite + $"/Destiny2/SearchDestinyPlayer/{search}/{username}/";
+                    var response = await client.GetAsync(link);
+                    var content = await response.Content.ReadAsStringAsync();
+                    dynamic item = Newtonsoft.Json.JsonConvert.DeserializeObject(content);
+                    displayName = item.Response[0].displayName;
+                    destinyMembershipId = item.Response[0].membershipId;
+                    destinyMembershipType = item.Response[0].membershipType;
+                    
+                }
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+                    string link = apiSite + $"/Destiny2/{destinyMembershipType}/Profile/{destinyMembershipId}/?components=100";
+                    var response = await client.GetAsync(link);
+                    var content = await response.Content.ReadAsStringAsync();
+                    dynamic item = Newtonsoft.Json.JsonConvert.DeserializeObject(content);
+                    var characterIds = item.Response.profile.data.characterIds;
+                    foreach (var characterIdx in characterIds)
+                    {
+                        characterIds.Add(characterIdx);
+                    }
+
+                    await Context.Channel.SendMessageAsync(displayName);
+                    await Context.Channel.SendMessageAsync(destinyMembershipId);
+                }
+            }
+            else
+            {
+                SocketUser target = null;
+                var mentionedUser = Context.Message.MentionedUsers.FirstOrDefault();
+                target = mentionedUser ?? Context.User;
+                var account = UserAccounts.GetAccount(target);
+                if (account.displayName == null || account.destinyMembershipId == " " || account.destinyMembershipType == " " || account.bungieMembershipId == " ")
+                {
+                    await Unregistered();
+                    return;
+                }
+                displayName = account.displayName;
+                destinyMembershipId = account.destinyMembershipId;
+                destinyMembershipType = account.destinyMembershipType;
+                characters.Add(account.character1);
+                characters.Add(account.character2);
+                characters.Add(account.character3);
+
+                await Context.Channel.SendMessageAsync(displayName);
+                await Context.Channel.SendMessageAsync(destinyMembershipId);
+            }
+           }
